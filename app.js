@@ -34,6 +34,7 @@ createApp({
         this.setupCanvas();
         this.resizeCanvas();
         window.addEventListener('resize', this.resizeCanvas);
+        this.initSteps();
     },
     beforeUnmount() {
         window.removeEventListener('resize', this.resizeCanvas);
@@ -121,13 +122,17 @@ createApp({
         },
         getCurrentColor() {
             if (this.selectedColor === 'rainbow') {
-                // Создаем плавный переход между цветами
+                // Создаем более разнообразные цвета
                 const currentColor = this.rainbowColors[this.rainbowIndex];
                 const nextColor = this.rainbowColors[(this.rainbowIndex + 1) % this.rainbowColors.length];
                 
                 // Смешиваем текущий и следующий цвет для плавного перехода
-                const mixFactor = Math.random() * 0.3; // Случайное смешение до 30%
-                return this.mixColors(currentColor, nextColor, mixFactor);
+                const mixFactor = Math.random() * 0.7; // Случайное смешение до 70%
+                const mixedColor = this.mixColors(currentColor, nextColor, mixFactor);
+                
+                // Добавляем небольшую вариацию яркости
+                const brightness = 0.8 + Math.random() * 0.4; // От 80% до 120% яркости
+                return this.adjustBrightness(mixedColor, brightness);
             }
             return this.selectedColor;
         },
@@ -150,6 +155,20 @@ createApp({
             const b = Math.round(b1 + (b2 - b1) * factor);
             
             return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+        },
+        adjustBrightness(color, factor) {
+            // Конвертируем hex в RGB
+            const hex = color.replace('#', '');
+            const r = parseInt(hex.substr(0, 2), 16);
+            const g = parseInt(hex.substr(2, 2), 16);
+            const b = parseInt(hex.substr(4, 2), 16);
+            
+            // Применяем фактор яркости
+            const newR = Math.min(255, Math.max(0, Math.round(r * factor)));
+            const newG = Math.min(255, Math.max(0, Math.round(g * factor)));
+            const newB = Math.min(255, Math.max(0, Math.round(b * factor)));
+            
+            return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
         },
         nextRainbowColor() {
             if (this.selectedColor === 'rainbow') {
@@ -185,12 +204,18 @@ createApp({
             this.canvas.style.cursor = this.currentTool === 'eraser' ? 'grab' : 'crosshair';
         },
         startDrawing(e) {
-            // Начинаем новую линию
-            this.saveState();
+            // Проверяем, включено ли рисование
+            if (!this.drawingEnabled) {
+                return;
+            }
+            
+            this.isDrawing = true;
             const rect = this.canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
             
+            // Начинаем новую линию
+            this.saveState();
             this.ctx.beginPath();
             this.ctx.moveTo(x, y);
             this.lastX = x;
@@ -202,22 +227,22 @@ createApp({
                 return;
             }
             
-            // Рисуем линию при движении мыши без нажатия
+            // Рисуем только если мышь нажата
+            if (!this.isDrawing) {
+                return;
+            }
+            
             const rect = this.canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
             
-            // Если это первое движение, начинаем новую линию
-            if (this.lastX === 0 && this.lastY === 0) {
-                this.saveState();
-                this.ctx.beginPath();
-                this.ctx.moveTo(x, y);
-            }
-            
             this.drawLine(x, y);
         },
         stopDrawing() {
-            // Завершаем линию
+            // Завершаем рисование
+            this.isDrawing = false;
+            this.lastX = 0;
+            this.lastY = 0;
         },
         drawLine(x, y) {
             if (this.currentTool === 'eraser') {
@@ -225,30 +250,30 @@ createApp({
                 this.ctx.lineWidth = this.selectedSize * 2;
                 this.ctx.lineCap = 'round';
                 this.ctx.lineJoin = 'round';
-                this.ctx.beginPath();
-                this.ctx.moveTo(this.lastX || x, this.lastY || y);
+                this.ctx.strokeStyle = 'rgba(0,0,0,1)';
                 this.ctx.lineTo(x, y);
                 this.ctx.stroke();
             } else {
                 // Получаем текущий цвет (может быть радужным)
                 const currentColor = this.getCurrentColor();
                 
-                // Простое рисование как карандаш
+                // Настраиваем стиль для рисования
                 this.ctx.globalCompositeOperation = 'source-over';
-                this.ctx.strokeStyle = currentColor;
                 this.ctx.lineWidth = this.selectedSize;
                 this.ctx.lineCap = 'round';
                 this.ctx.lineJoin = 'round';
-                this.ctx.shadowBlur = 0; // Убираем размытие
-                this.ctx.globalAlpha = 1; // Полная непрозрачность
+                this.ctx.shadowBlur = 0;
+                this.ctx.globalAlpha = 1;
                 
+                // Рисуем сегмент линии с текущим цветом
+                this.ctx.strokeStyle = currentColor;
                 this.ctx.beginPath();
-                this.ctx.moveTo(this.lastX || x, this.lastY || y);
+                this.ctx.moveTo(this.lastX, this.lastY);
                 this.ctx.lineTo(x, y);
                 this.ctx.stroke();
                 
-                // Переключаем цвет радуги более плавно
-                if (this.selectedColor === 'rainbow' && Math.random() < 0.05) {
+                // Переключаем цвет радуги для следующего сегмента
+                if (this.selectedColor === 'rainbow' && Math.random() < 0.3) {
                     this.nextRainbowColor();
                 }
             }
@@ -278,6 +303,39 @@ createApp({
                 this.updateCursor();
                 alert('Кисть включена! Можно рисовать снова.');
             }
+        },
+        
+        initSteps() {
+            // Добавляем интерактивность для карточек этапов
+            this.$nextTick(() => {
+                const stepInputs = document.querySelectorAll('.step__input');
+                
+                stepInputs.forEach((input) => {
+                    input.addEventListener('change', (e) => {
+                        if (e.target.checked) {
+                            // Закрываем все другие открытые карточки
+                            stepInputs.forEach((otherInput) => {
+                                if (otherInput !== e.target) {
+                                    otherInput.checked = false;
+                                }
+                            });
+                        }
+                    });
+                });
+                
+                // Добавляем анимацию появления карточек
+                const steps = document.querySelectorAll('.step');
+                steps.forEach((step, index) => {
+                    step.style.opacity = '0';
+                    step.style.transform = 'translateY(30px)';
+                    
+                    setTimeout(() => {
+                        step.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                        step.style.opacity = '1';
+                        step.style.transform = 'translateY(0)';
+                    }, index * 150);
+                });
+            });
         }
     }
 }).mount('#app');
