@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drawing App</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <div class="drawing-app">
+            <div class="toolbar">
+                <!-- Выбор цвета -->
+                <div class="color-picker">
+                    <label>Цвет:</label>
+                    <div 
+                        v-for="color in colors" 
+                        :key="color"
+                        :class="['color-option', { active: selectedColor === color }]"
+                        :style="{ backgroundColor: color }"
+                        @click="selectColor(color)"
+                    ></div>
+                </div>
+
+                <!-- Размер кисти -->
+                <div class="brush-size">
+                    <label>Размер:</label>
+                    <div 
+                        v-for="size in brushSizes" 
+                        :key="size"
+                        :class="['size-option', { active: selectedSize === size }]"
+                        @click="selectSize(size)"
+                    >
+                        {{ size }}
+                    </div>
+                </div>
+
+                <!-- Режим рисования -->
+                <div class="draw-mode">
+                    <label>Режим:</label>
+                    <button 
+                        :class="['mode-button', { active: drawMode === 'click' }]"
+                        @click="selectDrawMode('click')"
+                    >
+                        🖱️ Клик
+                    </button>
+                    <button 
+                        :class="['mode-button', { active: drawMode === 'hover' }]"
+                        @click="selectDrawMode('hover')"
+                    >
+                        ✨ Наведение
+                    </button>
+                </div>
+
+                <!-- Инструменты -->
+                <button 
+                    :class="['tool-button', { active: currentTool === 'brush' }]"
+                    @click="selectTool('brush')"
+                >
+                    🖌️ Кисть
+                </button>
+                
+                <button 
+                    :class="['tool-button', 'eraser', { active: currentTool === 'eraser' }]"
+                    @click="selectTool('eraser')"
+                >
+                    🧽 Ластик
+                </button>
+            </div>
+
+            <!-- Canvas для рисования -->
+            <div class="canvas-container">
+                <canvas 
+                    ref="canvas"
+                    @mousedown="startDrawing"
+                    @mousemove="draw"
+                    @mouseup="stopDrawing"
+                    @mouseleave="stopDrawing"
+                ></canvas>
+            </div>
+
+            <!-- Кнопки управления -->
+            <div class="controls">
+                <button 
+                    class="undo-button" 
+                    @click="undo"
+                    :disabled="historyIndex <= 0"
+                >
+                    ↶ Отменить
+                </button>
+                <button class="clear-button" @click="clearCanvas">
+                    🗑️ Очистить холст
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
