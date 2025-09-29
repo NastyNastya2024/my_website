@@ -10,63 +10,77 @@
 <body>
     <div id="app">
         <div class="drawing-app">
+            <!-- Компактная панель инструментов -->
             <div class="toolbar">
-                <!-- Выбор цвета -->
-                <div class="color-picker">
-                    <label>Цвет:</label>
-                    <div 
-                        v-for="color in colors" 
-                        :key="color"
-                        :class="['color-option', { active: selectedColor === color }]"
-                        :style="{ backgroundColor: color }"
-                        @click="selectColor(color)"
-                    ></div>
-                </div>
-
-                <!-- Размер кисти -->
-                <div class="brush-size">
-                    <label>Размер:</label>
-                    <div 
-                        v-for="size in brushSizes" 
-                        :key="size"
-                        :class="['size-option', { active: selectedSize === size }]"
-                        @click="selectSize(size)"
-                    >
-                        {{ size }}
-                    </div>
-                </div>
-
-                <!-- Режим рисования -->
-                <div class="draw-mode">
-                    <label>Режим:</label>
-                    <button 
-                        :class="['mode-button', { active: drawMode === 'click' }]"
-                        @click="selectDrawMode('click')"
-                    >
-                        🖱️ Клик
-                    </button>
-                    <button 
-                        :class="['mode-button', { active: drawMode === 'hover' }]"
-                        @click="selectDrawMode('hover')"
-                    >
-                        ✨ Наведение
-                    </button>
-                </div>
-
-                <!-- Инструменты -->
-                <button 
-                    :class="['tool-button', { active: currentTool === 'brush' }]"
-                    @click="selectTool('brush')"
-                >
-                    🖌️ Кисть
+                <button class="toolbar-toggle" @click="toggleToolbar">
+                    🎨
                 </button>
                 
-                <button 
-                    :class="['tool-button', 'eraser', { active: currentTool === 'eraser' }]"
-                    @click="selectTool('eraser')"
-                >
-                    🧽 Ластик
-                </button>
+                <div :class="['toolbar-panel', { open: toolbarOpen }]">
+                    <!-- Выбор цвета -->
+                    <div class="color-picker">
+                        <div class="color-label">Цвет</div>
+                        <div class="color-options">
+                            <div 
+                                v-for="color in colors" 
+                                :key="color"
+                                :class="['color-option', { active: selectedColor === color }]"
+                                :style="color === 'rainbow' ? { background: 'linear-gradient(45deg, #FFB3BA, #FFD1A1, #FFFFBA, #B3FFB3, #B3D9FF, #D1B3FF, #E6B3FF)' } : { backgroundColor: color }"
+                                @click="selectColor(color)"
+                            >
+                                <span v-if="color === 'rainbow'" style="font-size: 12px;">🌈</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Размер кисти -->
+                    <div class="brush-size">
+                        <div class="size-label">Размер</div>
+                        <div class="size-controls">
+                            <button class="size-decrease" @click="decreaseSize">−</button>
+                            <div class="size-display">{{ selectedSize }}</div>
+                            <button class="size-increase" @click="increaseSize">+</button>
+                        </div>
+                    </div>
+
+
+                    <!-- Инструменты -->
+                    <div class="tool-buttons">
+                        <button 
+                            :class="['tool-button', { active: currentTool === 'brush' }]"
+                            @click="selectTool('brush')"
+                        >
+                            🖌️ Кисть
+                        </button>
+                        
+                        <button 
+                            :class="['tool-button', 'eraser', { active: currentTool === 'eraser' }]"
+                            @click="selectTool('eraser')"
+                        >
+                            🧽 Ластик
+                        </button>
+                    </div>
+
+                    <!-- Кнопки управления -->
+                    <div class="control-buttons">
+                        <button 
+                            class="undo-button" 
+                            @click="undo"
+                            :disabled="historyIndex <= 0"
+                        >
+                            ↶ Отменить
+                        </button>
+                        <button class="clear-button" @click="clearCanvas">
+                            🗑️ Очистить
+                        </button>
+                        <button 
+                            class="disable-button" 
+                            @click="disableDrawing"
+                        >
+                            {{ drawingEnabled ? '🚫 Отключить кисть' : '✅ Включить кисть' }}
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- Canvas для рисования -->
@@ -80,19 +94,78 @@
                 ></canvas>
             </div>
 
-            <!-- Кнопки управления -->
-            <div class="controls">
-                <button 
-                    class="undo-button" 
-                    @click="undo"
-                    :disabled="historyIndex <= 0"
-                >
-                    ↶ Отменить
-                </button>
-                <button class="clear-button" @click="clearCanvas">
-                    🗑️ Очистить холст
-                </button>
+            <!-- Контент сайта -->
+            <div class="website-content">
+                <!-- Hero секция -->
+                <section class="hero">
+                    <div class="hero-content">
+                        <h1 class="hero-title">👉 Создаём продукты, готовые к рынку</h1>
+                        <p class="hero-subtitle">От исследования и дизайна до разработки и тестирования — полный цикл создания MVP и цифровых решений</p>
+                        <button class="cta-button">Обсудить проект</button>
+                    </div>
+                </section>
+
+                <!-- Блоки услуг -->
+                <section class="services">
+                    <div class="service-block">
+                        <h2>Начинаем с рынка и клиентов</h2>
+                        <ul>
+                            <li>Анализируем конкурентов и тренды</li>
+                            <li>Проводим кастдев с целевой аудиторией</li>
+                            <li>Формируем гипотезы и проверяем спрос до разработки</li>
+                        </ul>
+                        <p class="value">Вы получаете продукт, который нужен рынку, а не только вам</p>
+                    </div>
+
+                    <div class="service-block">
+                        <h2>Визуализируем идею</h2>
+                        <ul>
+                            <li>Разрабатываем прототипы интерфейсов</li>
+                            <li>Тестируем удобство и логику</li>
+                            <li>Создаём современный UI/UX-дизайн</li>
+                        </ul>
+                        <p class="value">До вложений в разработку видно, как будет работать продукт</p>
+                    </div>
+
+                    <div class="service-block">
+                        <h2>Проверяем гипотезы на реальных клиентах</h2>
+                        <ul>
+                            <li>Создаём тестовый лендинг или страницу предзаказа</li>
+                            <li>Запускаем маркетинговую кампанию</li>
+                            <li>Собираем аналитику и подтверждаем интерес</li>
+                        </ul>
+                        <p class="value">Экономим бюджет — продукт дорабатывается только под реальный спрос</p>
+                    </div>
+
+                    <div class="service-block">
+                        <h2>Делаем MVP быстро и качественно</h2>
+                        <ul>
+                            <li>Используем современные технологии</li>
+                            <li>Гибкая методология (Agile/Scrum)</li>
+                            <li>MVP готов к масштабированию и дальнейшему развитию</li>
+                        </ul>
+                        <p class="value">Вы быстро получаете работающий продукт для выхода на рынок</p>
+                    </div>
+
+                    <div class="service-block">
+                        <h2>Выводим на рынок</h2>
+                        <ul>
+                            <li>Помогаем с позиционированием</li>
+                            <li>Настраиваем аналитику и метрики</li>
+                            <li>Готовим к масштабированию и дальнейшему росту</li>
+                        </ul>
+                        <p class="value">Продукт сразу адаптирован для реальных пользователей и бизнеса</p>
+                    </div>
+                </section>
+
+                <!-- CTA секция -->
+                <section class="cta-section">
+                    <h2>Готовы проверить свою идею?</h2>
+                    <p>Обсудим ваш проект и предложим план вывода продукта на рынок</p>
+                    <button class="cta-button">Получить консультацию</button>
+                </section>
             </div>
+
         </div>
     </div>
 
